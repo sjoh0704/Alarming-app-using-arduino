@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "351499145870",
+    "firebase_url": "https://arduinovideo-5c84c.firebaseio.com",
+    "project_id": "arduinovideo-5c84c",
+    "storage_bucket": "arduinovideo-5c84c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:351499145870:android:7c4cf48be4d6e3df87afdf",
+        "android_client_info": {
+          "package_name": "org.techtown.arduinoblue"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "351499145870-sb2jnipe8nakqmjp1hf5rhap60a61rmr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCC5kbkwjmMou25Wzqcrz-vpFyRnNcSycM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "351499145870-sb2jnipe8nakqmjp1hf5rhap60a61rmr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

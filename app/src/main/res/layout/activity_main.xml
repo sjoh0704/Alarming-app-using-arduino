@@ -89,5 +89,55 @@
         android:text="Send Data"
         />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+        <EditText
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:hint="전화번호 입력"
+            android:inputType="phone"
+            android:layout_marginRight="10dp"
+            android:id="@+id/editTextPhoneNumber"
+            />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/savePhoneNumber"
+            android:text="연락처 저장"/>
+
+
+    </LinearLayout>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_record"
+        android:text="녹화 + 업로드 + 메시지 전송"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_upload"
+        android:visibility="visible"
+        android:text="파일 업로드"/>
+    <Button
+        android:visibility="visible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="메세지전송"
+        android:id="@+id/btn_send"/>
+    <SurfaceView
+        android:visibility="visible"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:id="@+id/surfaceView"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:id="@+id/textViewPhone"/>
+
+
 
 </LinearLayout>
