@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button mBtnBluetoothOn;
     Button mBtnBluetoothOff;
     Button mBtnConnect;
+    Button btnSavePhoneNo;
+    private TextView textViewPhone;
     private Camera camera;
     private MediaRecorder mediaRecorder;
     private Button btn_record, btn_upload;
@@ -77,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private  ProgressDialog progressDialog;
 
     private GpsTracker gpsTracker;
+    private List phoneNo;
 
 
     BluetoothAdapter mBluetoothAdapter;
@@ -98,13 +101,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         allowPermission();  //Ted permission으로 권한 얻어오기
         makeDir();
 
+        phoneNo = new ArrayList();
+
+        textViewPhone = findViewById(R.id.textViewPhone);
         btn_record = findViewById(R.id.btn_record);
         btn_upload = findViewById(R.id.btn_upload);
         btn_send = findViewById(R.id.btn_send);
-
+        btnSavePhoneNo = findViewById(R.id.savePhoneNumber);
+        btnSavePhoneNo.setOnClickListener(this);
         btn_record.setOnClickListener(this);
         btn_upload.setOnClickListener(this);
         btn_send.setOnClickListener(this);
@@ -275,8 +283,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     Toast.makeText(MainActivity.this, "firebase에 업로드중 기다려주세요", Toast.LENGTH_SHORT).show();
 
-                    btn_upload.callOnClick();
-                    btn_send.callOnClick();
+//                    btn_upload.callOnClick();
+//                    btn_send.callOnClick();
 
 
                 } else {
@@ -386,11 +394,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 double longtitude = gpsTracker.getLongitude();
                 String address = getCurrentAddress(latitude, longtitude);
                 String location = "\n위도: " + latitude + "\n경도: " + longtitude;
-                sendSms(phoneNum, address + location);
-                phoneNum = null;
+
+                for(Object object:phoneNo) {
+                    sendSms((String)object, address + location);
+                }
+
                 Toast.makeText(this, "문자 메시지 전송", Toast.LENGTH_SHORT).show();
 
                 break;
+            case R.id.savePhoneNumber:
+
+                String number = textPhoneNo.getText().toString();
+                if(number.length() != 11){
+                    Toast.makeText(this, "전화번호를 제대로 입력해주세요", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    phoneNo.add(number);
+                }
+
+                String phoneList = "";
+                for(Object n: phoneNo){
+                    String element = (String)n;
+                    phoneList += element + "\n";
+                }
+                textViewPhone.setText(phoneList);
+                textPhoneNo.setText("");
+
 
 
         }}
