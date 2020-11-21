@@ -28,8 +28,11 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,30 +59,32 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SurfaceHolder.Callback {
-    TextView mTvBluetoothStatus;
-    TextView mTvReceiveData;
-    TextView mTvSendData;
-    Button mBtnBluetoothOn;
-    Button mBtnBluetoothOff;
-    Button mBtnConnect;
-    Button btnSavePhoneNo;
-    private TextView textViewPhone;
-    private Camera camera;
-    private MediaRecorder mediaRecorder;
-    private Button btn_record, btn_upload;
-    private SurfaceView surfaceView;
-    private SurfaceHolder surfaceHolder;
-    private boolean recording = false;
-    private String filename = null;
-    private String dirPath;
-    private String TAG = "TAG";
-    private Button btn_send;
-    private EditText textPhoneNo;
-    private String phoneNum = null;
+
+    private Button mBtnBluetoothOn;   // 블루투스온 버튼
+    private Button mBtnBluetoothOff;  // 블루투스 꺼짐 버튼
+    private Button mBtnConnect;  // 아두이노와 블루투스연결 버튼
+    private Button btnSavePhoneNo;  // 핸드폰 번호 save 버튼
+    private TextView textViewPhone, textViewPhone2;  // personal contact 텍스트뷰, emergency contact 텍스트뷰
+    private Camera camera;  // 레코딩 카메라
+    private MediaRecorder mediaRecorder;  //  비디오레코더
+    private Button btn_record, btn_upload;  // 영상 레코딩하기 버튼, 영상 업로드하기 버튼(파이어베이스, 외부저장소에)
+    private SurfaceView surfaceView;   // 카메라 보여주는 화면
+    private SurfaceHolder surfaceHolder;  //
+    private boolean recording = false;  // recording 상태나타내기
+    private String filename = null;  // 만들어진 비디오 파일이름
+    private String dirPath;  // 저장된 파일경로
+    private Button btn_send;  // sms 메시지 전송 버튼
+    private EditText textPhoneNo;  //
     private  ProgressDialog progressDialog;
+    private int warningValue = 0;
+    private TextView status_textView;
 
     private GpsTracker gpsTracker;
-    private List phoneNo;
+    private List phoneNoBasic;
+    private List phoneNoEmergency;
+
+    private RadioButton radioButton1, radioButton2;
+
 
 
     BluetoothAdapter mBluetoothAdapter;
@@ -100,14 +105,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
+        setTitle("Vehicle Accident Notification");
         allowPermission();  //Ted permission으로 권한 얻어오기
         makeDir();
 
-        phoneNo = new ArrayList();
-
+        phoneNoBasic = new ArrayList();
+        phoneNoEmergency = new ArrayList();
+        status_textView = findViewById(R.id.status);
         textViewPhone = findViewById(R.id.textViewPhone);
+        textViewPhone2 = findViewById(R.id.textViewPhone2);
+
+        radioButton1 = findViewById(R.id.basicBtn);
+        radioButton2 = findViewById(R.id.emergencyBtn);
         btn_record = findViewById(R.id.btn_record);
         btn_upload = findViewById(R.id.btn_upload);
         btn_send = findViewById(R.id.btn_send);
@@ -117,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_upload.setOnClickListener(this);
         btn_send.setOnClickListener(this);
         textPhoneNo = findViewById(R.id.editTextPhoneNumber);
+        radioButton1.setOnClickListener(this);
+        radioButton2.setOnClickListener(this);
 
 
         progressDialog = new ProgressDialog(this);
@@ -125,11 +136,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog.setProgressStyle(android.R.style.Widget_ProgressBar_Horizontal);
 
 
-
-
-        mTvBluetoothStatus = (TextView)findViewById(R.id.tvBluetoothStatus);
-        mTvReceiveData = (TextView)findViewById(R.id.tvReceiveData);
-        mTvSendData =  (EditText) findViewById(R.id.tvSendData);
         mBtnBluetoothOn = (Button)findViewById(R.id.btnBluetoothOn);
         mBtnBluetoothOff = (Button)findViewById(R.id.btnBluetoothOff);
         mBtnConnect = (Button)findViewById(R.id.btnConnect);
@@ -167,22 +173,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
-                    mTvReceiveData.setText(readMessage);
+
+                    Log.e("readMessage: ",readMessage.substring(0,0) );
+                    warningValue = Integer.parseInt(readMessage.substring(0,1));
+                    if(warningValue == 2){
+                        if(recording) {
+                            btn_record.callOnClick();
+
+                        }
+                        status_textView.setText("severe");
+                        Toast.makeText(MainActivity.this, "severe", Toast.LENGTH_SHORT).show();
+
+                    }
+                    else if(warningValue == 1){
+                        if(recording) {
+                            btn_record.callOnClick();
+
+
+                        }
+                        status_textView.setText("danger");
+                        Toast.makeText(MainActivity.this, "danger", Toast.LENGTH_SHORT).show();
+                    }else{
+//                        Log.e("status: ", "안전");
+                        status_textView.setText("normal");
+                    }
+
+                    
+                    
+                    
                 }
             }
         };
     }
     void bluetoothOn() {
         if(mBluetoothAdapter == null) {
-            Toast.makeText(getApplicationContext(), "블루투스를 지원하지 않는 기기입니다.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "This device does not support Bluetooth.", Toast.LENGTH_LONG).show();
         }
         else {
             if (mBluetoothAdapter.isEnabled()) {
-                Toast.makeText(getApplicationContext(), "블루투스가 이미 활성화 되어 있습니다.", Toast.LENGTH_LONG).show();
-                mTvBluetoothStatus.setText("활성화");
+                Toast.makeText(getApplicationContext(), "Bluetooth has already been activated.", Toast.LENGTH_LONG).show();
+
             }
             else {
-                Toast.makeText(getApplicationContext(), "블루투스가 활성화 되어 있지 않습니다.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Bluetooth is not activated.", Toast.LENGTH_LONG).show();
                 Intent intentBluetoothEnable = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(intentBluetoothEnable, BT_REQUEST_ENABLE);
             }
@@ -191,11 +224,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     void bluetoothOff() {
         if (mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.disable();
-            Toast.makeText(getApplicationContext(), "블루투스가 비활성화 되었습니다.", Toast.LENGTH_SHORT).show();
-            mTvBluetoothStatus.setText("비활성화");
+            Toast.makeText(getApplicationContext(), "Bluetooth is deactivated", Toast.LENGTH_SHORT).show();
+
         }
         else {
-            Toast.makeText(getApplicationContext(), "블루투스가 이미 비활성화 되어 있습니다.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Bluetooth has already been deactivated.", Toast.LENGTH_SHORT).show();
         }
     }
     @Override
@@ -203,11 +236,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (requestCode) {
             case BT_REQUEST_ENABLE:
                 if (resultCode == RESULT_OK) { // 블루투스 활성화를 확인을 클릭하였다면
-                    Toast.makeText(getApplicationContext(), "블루투스 활성화", Toast.LENGTH_LONG).show();
-                    mTvBluetoothStatus.setText("연결되었습니다.");
+                    Toast.makeText(getApplicationContext(), "Activate Bluetooth", Toast.LENGTH_LONG).show();
+
                 } else if (resultCode == RESULT_CANCELED) { // 블루투스 활성화를 취소를 클릭하였다면
-                    Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show();
-                    mTvBluetoothStatus.setText("연결되지 않았습니다.");
+                    Toast.makeText(getApplicationContext(), "Cancel", Toast.LENGTH_LONG).show();
+
                 }
                 break;
         }
@@ -219,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             if (mPairedDevices.size() > 0) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("장치 선택");
+                builder.setTitle("DEVICES");
 
                 mListPairedDevices = new ArrayList<String>();
                 for (BluetoothDevice device : mPairedDevices) {
@@ -238,11 +271,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 AlertDialog alert = builder.create();
                 alert.show();
             } else {
-                Toast.makeText(getApplicationContext(), "페어링된 장치가 없습니다.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Unpaired Devices", Toast.LENGTH_LONG).show();
             }
         }
         else {
-            Toast.makeText(getApplicationContext(), "블루투스가 비활성화 되어 있습니다.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Bluetooth is Deactivated.", Toast.LENGTH_SHORT).show();
         }
     }
     void connectSelectedDevice(String selectedDeviceName) {
@@ -260,14 +293,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mBluetoothHandler.obtainMessage(BT_CONNECTING_STATUS, 1, -1).sendToTarget();
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "블루투스 연결 중 오류가 발생했습니다.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Error Establishing Connection", Toast.LENGTH_LONG).show();
         }
     }
 
     @Override
     public void onClick(View view) {
-
-
 
 
 
@@ -281,10 +312,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     camera.lock();
                     recording = false;
 
-                    Toast.makeText(MainActivity.this, "firebase에 업로드중 기다려주세요", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Please wait_Uploading to Firebase", Toast.LENGTH_SHORT).show();
 
-//                    btn_upload.callOnClick();
-//                    btn_send.callOnClick();
+                    btn_upload.callOnClick();
+                    btn_send.callOnClick();
 
 
                 } else {
@@ -292,11 +323,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         @Override
                         public void run() {
 
-                            if (textPhoneNo.length() == 11) {
-                                phoneNum = textPhoneNo.getText().toString();
+                            if (phoneNoBasic.size()!= 0 || phoneNoEmergency.size()!=0 ) {
+
                                 //과부화도 덜되고 동영상 처리는 여기서 하는게 좋다
-                                Toast.makeText(MainActivity.this, "녹화가 시작되었습니다.", Toast.LENGTH_SHORT).show();
                                 try {
+                                    Toast.makeText(MainActivity.this, "Recording", Toast.LENGTH_SHORT).show();
 
 
                                     mediaRecorder = new MediaRecorder();
@@ -318,15 +349,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     mediaRecorder.start();
                                     recording = true;
 
-
-                                    MediaScanner ms = MediaScanner.newInstance(MainActivity.this);
-                                    try {
-                                        ms.mediaScanning(dirPath + "/" + filename);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                        Log.d("MediaScan", "ERROR" + e);
-                                    } finally {
-                                    }
+//
+//                                    MediaScanner ms = MediaScanner.newInstance(MainActivity.this);
+//                                    try {
+//                                        ms.mediaScanning(dirPath + "/" + filename);
+//                                    } catch (Exception e) {
+//                                        e.printStackTrace();
+//                                        Log.d("MediaScan", "ERROR" + e);
+//                                    } finally {
+//                                    }
 //                                galleryAddPic();
 
 
@@ -335,7 +366,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     mediaRecorder.release();
                                 }
                             } else {
-                                Toast.makeText(MainActivity.this, "전화번호를 입력해주세요", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "Not Registered", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -346,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_upload:
                 if (filename != null) {
 
-                    Log.e("파일명 확인: ", filename);
+                    Log.e("Verification File: ", filename);
 
                     FirebaseStorage storage = FirebaseStorage.getInstance();
 
@@ -355,7 +386,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //storage url 적는란
 
 
-                    Log.e("URi 확인: ", String.valueOf(file));
+                    Log.e("Verification url: ", String.valueOf(file));
                     storageRef.putFile(file)
                             .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                                 @Override
@@ -370,50 +401,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    Toast.makeText(MainActivity.this, "업로드 성공", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "Upload Success ", Toast.LENGTH_SHORT).show();
                                     filename = null;
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
                                 @Override
                                 public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(MainActivity.this, "업로드 실패", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "Upload Fail", Toast.LENGTH_SHORT).show();
                                 }
                             });
 
 
                 } else {
-                    Toast.makeText(MainActivity.this, "파일 없음", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "No File", Toast.LENGTH_SHORT).show();
                 }
                 break;
 
 
             case R.id.btn_send:
-                gpsTracker = new GpsTracker(this);
-                double latitude = gpsTracker.getLatitude();
-                double longtitude = gpsTracker.getLongitude();
-                String address = getCurrentAddress(latitude, longtitude);
-                String location = "\n위도: " + latitude + "\n경도: " + longtitude;
+                if(phoneNoEmergency.size()!= 0 || phoneNoBasic.size()!=0) {
+                    Log.e("SMS: ", "check");
+                    gpsTracker = new GpsTracker(this);
+                    double latitude = gpsTracker.getLatitude();
+                    double longtitude = gpsTracker.getLongitude();
+                    String address = getCurrentAddress(latitude, longtitude);
+                    String location = "\n위도: " + latitude + "\n경도: " + longtitude;
+                    Log.e("WarningValue: ", String.valueOf(warningValue));
+                    Log.e("basic: ", String.valueOf(phoneNoBasic.size()));
+                    Log.e("emergency: ", String.valueOf(phoneNoEmergency.size()));
 
-                for(Object object:phoneNo) {
-                    sendSms((String)object, address + location);
-                }
 
-                Toast.makeText(this, "문자 메시지 전송", Toast.LENGTH_SHORT).show();
+                    if (warningValue >= 1) {
+                        for (Object object : phoneNoBasic) {
 
-                break;
-            case R.id.savePhoneNumber:
+                            sendSms((String) object, address + location);
+                        }
+                    }
+                    if (warningValue >= 2) {
+                        for (Object object : phoneNoEmergency) {
+                            sendSms((String) object, address + location);
+                        }
+                    }
 
-                String number = textPhoneNo.getText().toString();
-                if(number.length() != 11){
-                    Toast.makeText(this, "전화번호를 제대로 입력해주세요", Toast.LENGTH_SHORT).show();
+
+                    Toast.makeText(this, "Text Message", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    phoneNo.add(number);
+                    Toast.makeText(this, "Register Mobile Number", Toast.LENGTH_SHORT).show();
+                }
+
+                break;
+            case R.id.basicBtn:
+
+                btnSavePhoneNo.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        String number = textPhoneNo.getText().toString();
+                if(number.length() != 11){
+                    Toast.makeText(MainActivity.this, "Register appropriate Number", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    phoneNoBasic.add(number);
                 }
 
                 String phoneList = "";
-                for(Object n: phoneNo){
+                for(Object n: phoneNoBasic){
                     String element = (String)n;
                     phoneList += element + "\n";
                 }
@@ -422,10 +476,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
+                    }
+                });
+
+
+                break;
+
+            case R.id.emergencyBtn:
+
+                btnSavePhoneNo.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        String number = textPhoneNo.getText().toString();
+                        if(number.length() != 11 ){
+                            Toast.makeText(MainActivity.this, "Register appropriate Number", Toast.LENGTH_SHORT).show();
+                        }
+                        else{
+                            phoneNoEmergency.add(number);
+                        }
+
+                        String phoneList = "";
+                        for(Object n: phoneNoEmergency){
+                            String element = (String)n;
+                            phoneList += element + "\n";
+                        }
+                        textViewPhone2.setText(phoneList);
+                        textPhoneNo.setText("");
+
+
+
+                    }
+                });
+
+                break;
+
+//
+
+
         }}
 
     private void sendSms(String phoneNum, String msg) {
+
         SmsManager sms = SmsManager.getDefault();
+        Log.e("SendSMS: ", phoneNum);
+        Log.e("MSG: ",msg);
         sms.sendTextMessage(phoneNum, null, msg, null, null);
 
 
@@ -447,19 +542,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     7);
         } catch (IOException ioException) {
             //네트워크 문제
-            Toast.makeText(this, "지오코더 서비스 사용불가", Toast.LENGTH_LONG).show();
-            return "지오코더 서비스 사용불가";
+            Toast.makeText(this, "Geocoder is not available", Toast.LENGTH_LONG).show();
+            return "Geocoder is not available";
         } catch (IllegalArgumentException illegalArgumentException) {
-            Toast.makeText(this, "잘못된 GPS 좌표", Toast.LENGTH_LONG).show();
-            return "잘못된 GPS 좌표";
+            Toast.makeText(this, "Wrong GPS Location", Toast.LENGTH_LONG).show();
+            return "Wrong GPS Location";
 
         }
 
 
 
         if (addresses == null || addresses.size() == 0) {
-            Toast.makeText(this, "주소 미발견", Toast.LENGTH_LONG).show();
-            return "주소 미발견";
+            Toast.makeText(this, "Address is not detected", Toast.LENGTH_LONG).show();
+            return "Address is not detected";
 
         }
 
@@ -497,7 +592,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tmpIn = socket.getInputStream();
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
-                Toast.makeText(getApplicationContext(), "소켓 연결 중 오류가 발생했습니다.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Error Establishing Socket Connection", Toast.LENGTH_LONG).show();
             }
 
             mmInStream = tmpIn;
@@ -533,14 +628,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             File file = new File(dirPath);
             if( !file.exists() )  // 원하는 경로에 폴더가 있는지 확인
             {
-                Log.e("TAG : ", "디렉토리 생성");
+                Log.e("TAG : ", "Create Directory");
                 file.mkdirs();
             }
-            else Log.e("TAG : ", "디렉토리 이미존재");
+            else Log.e("TAG : ", "Directory has been created");
 
         }
         else
-            Toast.makeText(this, "SD Card 인식 실패", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, " Failed SD Card Verification", Toast.LENGTH_SHORT).show();
     }
     PermissionListener permission = new PermissionListener() {
         @Override
@@ -564,8 +659,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         TedPermission.with(this)
                 .setPermissionListener(permission)
-                .setRationaleMessage("필요한 권한을 허용해주세요.")
-                .setDeniedMessage("권한이 거부되었습니다.")
+                .setRationaleMessage("Allow needed authentication")
+                .setDeniedMessage("Authentification has been denied")
                 .setPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO, Manifest.permission.SEND_SMS, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION )
                 .check();
     }
