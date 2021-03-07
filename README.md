@@ -1,6 +1,4 @@
 # Collision alarming app using arduino
-</br>
-
 ## Collision alarming service
 - SW-420 진동센서에서 충돌 트리거를 발생시킨후 bluetooth를 이용하여 안드로이드 앱으로 전송
 - 앱에서는 센서의 트리거의 위험수준을 판별하여 위험 수준이 일정 수준 이상일때 미리 저장된 연락망으로 SMS전송
@@ -8,14 +6,14 @@
 </br>
 
 
-## Block Diagram
+> ## Block Diagram
 
 ![image](https://user-images.githubusercontent.com/66519046/110231008-5a135c80-7f58-11eb-813c-28f8c5f55635.png)
 
 </br>
 
 
-##  Screen
+> ##  Screen
 
 ### 기본 스크린
 ![image](https://user-images.githubusercontent.com/66519046/110231549-b75cdd00-7f5b-11eb-896a-b61cf800a565.png)
@@ -32,6 +30,6 @@
 
 </br>
 
-## 아두이노 설계도 
+> ## 회로 설계도  
 
 </br>
