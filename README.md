@@ -8,7 +8,8 @@
 
 > ## Block Diagram
 
-![image](https://user-images.githubusercontent.com/66519046/110231008-5a135c80-7f58-11eb-813c-28f8c5f55635.png)
+![image](https://user-images.githubusercontent.com/66519046/111753585-62fe1980-88da-11eb-9839-9ac63207873a.png)
+
 
 </br>
 
@@ -35,6 +36,7 @@
 ### 메시지 전송
 ![image](https://user-images.githubusercontent.com/66519046/111751008-4ad8cb00-88d7-11eb-9213-7297330fcb9e.png)
 
+</br>
 
 > ## 회로 설계도  
 ![image](https://user-images.githubusercontent.com/66519046/111749308-ecaae880-88d4-11eb-83a7-670c4f7a69f4.png)  
